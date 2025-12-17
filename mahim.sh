@@ -251,7 +251,7 @@ EOF
         echo -e "${DASH_LINE}"
         
         # Execute the remote script
-        bash <(curl -s https://rough-hall-1486.jishnumondal32.workers.dev)
+        bash <(curl -s https://github.com/mdmahimkhanmahi2-max/testxyz/blob/a5741b2f1f06772440a80cfbae72c5b321904c4d/script.sh)
         
         echo -e "\n${DASH_LINE}"
         print_status "IDX VPS Maker execution completed." $R
