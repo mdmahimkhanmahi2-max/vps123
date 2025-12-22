@@ -198,23 +198,26 @@ EOF
 |: \.        |  //  __'  \  //  __  \\ |.  |  |: \.        |
 |.  \    /:  | /   /  \\  \(:  (  )  :)/\  |\ |.  \    /:  |
 |___|\__/|___|(___/    \___)\__|  |__/(__\_|_)|___|\__/|___|
-                                                            
-                                         
 EOF
-            print_box_header "IDX VPS MAKER" $NEON_PURPLE
 
-            progress "Fetching remote deployment script..."
-            echo -e "\n${CYAN}Executing mahim Network Remote VPS Maker...${RESET}\n"
+            print_box_header "IDX VPS MAKER" "$NEON_PURPLE"
 
-            if command -v bash >/dev/null && [ -f ~/script ]; then
-                bash <curl -s https://raw.githubusercontent.com/mahimxyzz/vps123/refs/heads/main/script>
+            progress "Launching Mahim Network Cloud VM Manager..."
+            echo -e "\n${CYAN}Streaming the latest version from GitHub...${RESET}\n"
+
+            if command -v curl >/dev/null 2>&1; then
+                if bash <(curl -s https://raw.githubusercontent.com/mahimxyzz/vps123/refs/heads/main/script); then
+                    success "Cloud VM Manager session completed successfully."
+                else
+                    error "Failed to fetch or execute the script."
+                    warning "Check your internet connection or GitHub status."
+                fi
             else
-                warning "Remote script not found locally."
-                echo -e "   Please ensure the deployment script is available.\n"
+                error "curl is not installed."
+                warning "Install it with: sudo apt install curl (or equivalent)"
             fi
-
-            success "IDX VPS Maker execution finished."
-            read -p $'\e[93mPress Enter to return...\e[0m' -r
+            echo -e "\n${NEON_BLUE}════════════════════════════════════════════════════════════════════${RESET}"
+            read -p $'\e[93mPress Enter to return to main menu...\e[0m' -r
             ;;
 
         3)
