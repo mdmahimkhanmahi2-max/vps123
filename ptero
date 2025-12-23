@@ -8,7 +8,6 @@
 # Discord : https://discord.gg/zkDNdPpArS
 # ===================================================
 set -e
-
 # Next-Gen Neon Color Theme
 RESET="\e[0m"
 BOLD="\e[1m"
@@ -26,9 +25,7 @@ NEON_PURPLE="\e[38;5;165m"
 NEON_BLUE="\e[38;5;75m"
 GLOW="\e[38;5;51m"
 DANGER="\e[38;5;196m"
-
 clear
-
 # Epic Welcome Animation Header
 welcome_banner() {
     clear
@@ -50,13 +47,11 @@ EOF
     echo -e "${NEON_BLUE}══════════════════════════════════════════════════════════${RESET}\n"
     sleep 1.5
 }
-
 # Utility Functions
 progress() { echo -e "${NEON_GREEN}${BOLD}➤ $1${RESET}"; }
 success() { echo -e "${GREEN}${BOLD}✓ $1${RESET}"; }
 warning() { echo -e "${YELLOW}${BOLD}! $1${RESET}"; }
 error() { echo -e "${RED}${BOLD}✘ $1${RESET}"; }
-
 print_box_header() {
     local text="$1"
     local color="${2:-$NEON_PURPLE}"
@@ -64,7 +59,6 @@ print_box_header() {
     echo -e "${color}${BOLD}║${RESET} ${WHITE}${BOLD}$text$(printf '%*s' $((58 - ${#text})) '') ${color}${BOLD}║${RESET}"
     echo -e "${color}${BOLD}╚══════════════════════════════════════════════════════════╝${RESET}\n"
 }
-
 print_menu_option() {
     local num="$1"
     local text="$2"
@@ -72,7 +66,6 @@ print_menu_option() {
     echo -e "${NEON_BLUE} │${RESET} ${WHITE}${BOLD}[${NEON_GREEN}${num}${WHITE}]${RESET} ${CYAN}${text}$(printf '%*s' $((48 - ${#text} - 3)) '') ${NEON_BLUE}│${RESET}"
     echo -e "${NEON_BLUE} └──────────────────────────────────────────────────────┘${RESET}"
 }
-
 # Remote Script Runner
 run_remote_script() {
     local url="$1"
@@ -99,13 +92,10 @@ EOF
         success "$name completed!"
     else
         error "Failed to download script from $url"
-        read -p $'\e[93mPress Enter to return to menu...\e[0m' -r
-        return 1
     fi
     echo -e "\n${NEON_BLUE}══════════════════════════════════════════════════════════${RESET}"
     read -p $'\e[93mPress Enter to return to menu...\e[0m' -r
 }
-
 # Main Menu
 show_menu() {
     clear
@@ -138,10 +128,8 @@ EOF
     read -p $'\e[93m\e[1m Select option [0-10]: \e[0m' choice
     echo
 }
-
 # Welcome
 welcome_banner
-
 # Main Loop
 while true; do
     show_menu
@@ -161,50 +149,49 @@ while true; do
             success "Tailscale installed!"
             systemctl enable --now tailscaled 2>/dev/null || true
             progress "Bringing Tailscale online..."
-            sudo tailscale up && success "Connected! Approve in admin console"
+            if [ -n "$TS_AUTH_KEY" ]; then
+                sudo tailscale up --auth-key="$TS_AUTH_KEY" && success "Authenticated via key"
+            else
+                sudo tailscale up && success "Connected! Approve in admin console"
+            fi
             read -p $'\e[93mPress Enter to continue...\e[0m' -r
             ;;
         9)
-            if [ ! -d "/var/www/pterodactyl" ]; then
-                error "Panel directory not found! Install the panel first."
-                read -p $'\e[93mPress Enter to continue...\e[0m' -r
-                continue
-            fi
             clear
             print_box_header "MINECRAFT PLAYER MANAGER" $NEON_PURPLE
             progress "Installing Minecraft extensions..."
-            cd /var/www/pterodactyl
-            wget -q https://github.com/mahimxyzz/Vps/raw/refs/heads/main/minecraftplayermanager.blueprint || { error "Download failed"; read -p "Press Enter..."; continue; }
-            wget -q https://github.com/mahimxyzz/Vps/raw/refs/heads/main/mcplugins.blueprint || { error "Download failed"; read -p "Press Enter..."; continue; }
-            wget -q https://github.com/mahimxyzz/Vps/raw/refs/heads/main/huxregister.blueprint || { error "Download failed"; read -p "Press Enter..."; continue; }
-            if command -v blueprint >/dev/null 2>&1; then
-                blueprint -i mcplugins.blueprint && success "MC Plugins installed"
-                blueprint -i minecraftplayermanager.blueprint && success "Player Manager installed"
-                blueprint -i huxregister.blueprint && success "huxregister installed"
-            else
-                warning "Blueprint command not found. Install Blueprint first (option 5)."
-            fi
+            cd /var/www/pterodactyl || { error "Panel directory not found!"; read -p "Press Enter..."; continue; }
+            wget -q https://github.com/mahimxyzz/Vps/raw/refs/heads/main/minecraftplayermanager.blueprint
+            wget -q https://github.com/mahimxyzz/Vps/raw/refs/heads/main/mcplugins.blueprint
+            wget -q https://github.com/mahimxyzz/Vps/raw/refs/heads/main/huxregister.blueprint
+            blueprint -i mcplugins.blueprint && success "MC Plugins installed"
+            blueprint -i minecraftplayermanager.blueprint && success "Player Manager installed"
+            blueprint -i huxregister.blueprint && success "huxregister installed"
             read -p $'\e[93mPress Enter to continue...\e[0m' -r
             ;;
         10)
-            if [ ! -d "/var/www/pterodactyl" ]; then
-                error "Panel directory not found! Install the panel first."
-                read -p $'\e[93mPress Enter to continue...\e[0m' -r
-                continue
-            fi
             clear
             print_box_header "JEXACTYL INSTALLATION" $NEON_PURPLE
             progress "Installing Jexactyl Theme..."
-            cd /var/www/pterodactyl
+            cd /var/www/pterodactyl || { error "Panel directory not found!"; read -p "Press Enter..."; continue; }
+           
+            # Remove old theme if exists
             rm -rf resources/scripts/jexactyl
-            git clone https://github.com/jexactyl/jexactyl.git temp_jexactyl >/dev/null 2>&1 || { error "Git clone failed"; read -p "Press Enter..."; continue; }
+           
+            # Clone Jexactyl
+            git clone https://github.com/jexactyl/jexactyl.git temp_jexactyl >/dev/null 2>&1
             cp -r temp_jexactyl/resources/scripts/* resources/scripts/
             rm -rf temp_jexactyl
+           
+            # Apply CSS/JS overrides
             curl -sLo resources/scripts/jexactyl/jexactyl.css https://raw.githubusercontent.com/jexactyl/jexactyl/main/jexactyl.css
             curl -sLo resources/scripts/jexactyl/jexactyl.js https://raw.githubusercontent.com/jexactyl/jexactyl/main/jexactyl.js
+           
+            # Clear cache
             php artisan view:clear
             php artisan config:clear
             php artisan cache:clear
+           
             success "Jexactyl theme installed successfully!"
             echo -e "\n${YELLOW}Refresh your panel with Ctrl+Shift+R to see the new theme!${RESET}"
             read -p $'\e[93mPress Enter to continue...\e[0m' -r
