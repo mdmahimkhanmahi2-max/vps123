@@ -169,7 +169,7 @@ while true; do
             blueprint -i huxregister.blueprint && success "huxregister installed"
             read -p $'\e[93mPress Enter to continue...\e[0m' -r
             ;;
-        10)
+10)
             clear
             print_box_header "JEXACTYL FULL PANEL MIGRATION" $NEON_PURPLE
             
@@ -183,18 +183,17 @@ while true; do
             echo -e "${BOLD}${RED}╚══════════════════════════════════════════════════════════════╝${RESET}"
             echo
             
-            # Force user to type "yes" to confirm
+            # Require user to type exactly "yes" to confirm
             while true; do
-                echo -e "${YELLOW}${BOLD}To continue the migration, type ${UNDERLINE}yes${RESET}${BOLD} exactly and press Enter.${RESET}"
+                echo -e "${YELLOW}${BOLD}To continue the migration, type ${UNDERLINE}yes${RESET}${YELLOW}${BOLD} exactly and press Enter:${RESET}"
                 read -r confirmation
                 if [[ "$confirmation" == "yes" ]]; then
-                    proceed=yes
                     break
                 else
-                    echo -e "${RED}${BOLD}✘ Confirmation failed. You typed: '$confirmation'${RESET}"
+                    echo -e "${RED}${BOLD}✘ Incorrect confirmation. You typed: '${confirmation:-<empty>}'${RESET}"
                     echo -e "${YELLOW}Migration cancelled. Returning to menu...${RESET}"
                     read -p $'\e[93mPress Enter to continue...\e[0m' -r
-                    continue 2  # Skip the rest and go back to main menu
+                    continue 2  # Return to main menu
                 fi
             done
             
@@ -212,9 +211,9 @@ while true; do
                 continue
             }
             
-            progress "Downloading latest Jexactyl release..."
-            curl -L -o panel.tar.gz https://github.com/jexactyl/jexactyl/releases/latest/download/panel.tar.gz || {
-                echo -e "${RED}${BOLD}✘ Download failed. Check internet connection or GitHub status.${RESET}"
+            progress "Downloading latest stable Jexactyl release (v3.7.4)..."
+            curl -L -o panel.tar.gz https://github.com/jexactyl/jexactyl/releases/download/v3.7.4/panel.tar.gz || {
+                echo -e "${RED}${BOLD}✘ Download failed. Check internet or GitHub status.${RESET}"
                 php artisan up
                 read -p $'\e[93mPress Enter to continue...\e[0m' -r
                 continue
@@ -233,7 +232,7 @@ while true; do
             chmod -R 755 storage/* bootstrap/cache
             
             progress "Updating Composer dependencies..."
-            composer require asbiin/laravel-webauthn --no-interaction 2>/dev/null || echo -e "${YELLOW}ℹ Temporary WebAuthn package skipped (normal if not needed).${RESET}"
+            composer require asbiin/laravel-webauthn --no-interaction 2>/dev/null || echo -e "${YELLOW}ℹ WebAuthn package skipped (usually not needed).${RESET}"
             composer install --no-dev --optimize-autoloader --no-interaction || {
                 echo -e "${RED}${BOLD}✘ Composer installation failed.${RESET}"
                 php artisan up
@@ -246,14 +245,14 @@ while true; do
             
             progress "Running database migrations & seeding..."
             php artisan migrate --seed --force || {
-                echo -e "${RED}${BOLD}✘ Database migration failed! Restore from backup immediately!${RESET}"
+                echo -e "${RED}${BOLD}✘ Database migration failed! Restore backup ASAP!${RESET}"
                 php artisan up
                 read -p $'\e[93mPress Enter to continue...\e[0m' -r
                 continue
             }
             
             progress "Fixing webserver ownership (www-data)..."
-            chown -R www-data:www-data /var/www/pterodactyl/* 2>/dev/null || echo -e "${YELLOW}ℹ Ownership fix skipped (run manually if using nginx/apache on different user).${RESET}"
+            chown -R www-data:www-data /var/www/pterodactyl/* 2>/dev/null || echo -e "${YELLOW}ℹ Ownership fix skipped (manual chown if needed).${RESET}"
             
             progress "Restarting queue workers..."
             php artisan queue:restart
@@ -264,12 +263,12 @@ while true; do
             echo
             echo -e "${NEON_GREEN}${BOLD}╔══════════════════════════════════════════════════════════════╗${RESET}"
             echo -e "${NEON_GREEN}${BOLD}║               JEXACTYL MIGRATION SUCCESSFUL!                  ║${RESET}"
-            echo -e "${NEON_GREEN}${BOLD}║  Your panel is now running the full Jexactyl version.        ║${RESET}"
-            echo -e "${NEON_GREEN}${BOLD}║  New features: billing, ticketing, improved UI & more!       ║${RESET}"
+            echo -e "${NEON_GREEN}${BOLD}║  Your panel is now running Jexactyl v3.7.4 (latest stable)   ║${RESET}"
+            echo -e "${NEON_GREEN}${BOLD}║  Enjoy billing, ticketing, improved UI & many more features! ║${RESET}"
             echo -e "${NEON_GREEN}${BOLD}╚══════════════════════════════════════════════════════════════╝${RESET}"
             echo
-            echo -e "${CYAN}${BOLD}➜ Clear browser cache with Ctrl+Shift+R and refresh the panel.${RESET}"
-            echo -e "${WHITE}${DIM}Enjoy the enhanced experience!${RESET}"
+            echo -e "${CYAN}${BOLD}➜ Hard refresh browser (Ctrl+Shift+R) to load the new panel.${RESET}"
+            echo -e "${WHITE}${DIM}Welcome to Jexactyl! 🎉${RESET}"
             
             read -p $'\e[93mPress Enter to continue...\e[0m' -r
             ;;
