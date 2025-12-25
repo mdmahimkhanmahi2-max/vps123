@@ -156,19 +156,22 @@ while true; do
             fi
             read -p $'\e[93mPress Enter to continue...\e[0m' -r
             ;;
-        9)
-            clear
-            print_box_header "MINECRAFT PLAYER MANAGER" $NEON_PURPLE
-            progress "Installing Minecraft extensions..."
-            cd /var/www/pterodactyl || { error "Panel directory not found!"; read -p "Press Enter..."; continue; }
-            wget -q https://github.com/mahimxyzz/Vps/raw/refs/heads/main/minecraftplayermanager.blueprint
-            wget -q https://github.com/mahimxyzz/Vps/raw/refs/heads/main/mcplugins.blueprint
-            wget -q https://github.com/mahimxyzz/Vps/raw/refs/heads/main/huxregister.blueprint
-            blueprint -i mcplugins.blueprint && success "MC Plugins installed"
-            blueprint -i minecraftplayermanager.blueprint && success "Player Manager installed"
-            blueprint -i huxregister.blueprint && success "huxregister installed"
-            read -p $'\e[93mPress Enter to continue...\e[0m' -r
-            ;;
+9)
+    clear
+    print_box_header "MINECRAFT PLAYER MANAGER" $NEON_PURPLE
+    progress "Installing Minecraft extensions..."
+    cd /var/www/pterodactyl || { error "Panel directory not found!"; read -p "Press Enter..."; continue; }
+    
+    wget -q https://github.com/mahimxyzz/Vps/raw/main/minecraftplayermanager.blueprint
+    wget -q https://github.com/mahimxyzz/Vps/raw/main/mcplugins.blueprint
+    wget -q https://github.com/mahimxyzz/Vps/raw/main/huxregister.blueprint
+    
+    blueprint -i mcplugins.blueprint && success "MC Plugins installed"
+    blueprint -i minecraftplayermanager.blueprint && success "Player Manager installed"
+    blueprint -i huxregister.blueprint && success "huxregister installed"
+    
+    read -p $'\e[93mPress Enter to continue...\e[0m' -r
+    ;;
 0)
             exit
             ;;
