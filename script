@@ -339,107 +339,6 @@ stop_vm() {
     success "Stopped"
 }
 
-delete_vm() {
-    local vm="$1"
-    load_vm_config "$vm"
-    warning "PERMANENT DELETE '$vm'?"
-    read -p "Type YES: " c
-    [[ "$c" == "YES" ]] || { progress "Cancelled"; return; }
-    is_vm_running "$vm" && stop_vm "$vm"
-    rm -f "$IMG_FILE" "$SEED_FILE" "$VM_DIR/$vm.conf" "${IMG_FILE}.lock"
-    success "Deleted"
-}
-
-show_vm_info() {
-    local vm="$1"
-    load_vm_config "$vm"
-    box_header "INFO: $vm"
-    echo -e "${WHITE}OS:${RESET} $OS_TYPE $CODENAME"
-    echo -e "${WHITE}Host:${RESET} $HOSTNAME • ${WHITE}User:${RESET} $USERNAME"
-    echo -e "${WHITE}SSH:${RESET} ssh -p $SSH_PORT $USERNAME@localhost"
-    echo -e "${WHITE}Resources:${RESET} $MEMORY MB RAM • $CPUS CPU • $DISK_SIZE Disk"
-    echo -e "${WHITE}GUI:${RESET} $GUI_MODE • ${WHITE}Forwards:${RESET} ${PORT_FORWARDS:-None}"
-    echo -e "${WHITE}Status:${RESET} $(is_vm_running "$vm" && echo "🟢 Running" || echo "🔴 Stopped")"
-    read -p $'\e[93mPress Enter... \e[0m' -r
-}
-
-edit_vm_config() {
-    local vm="$1"
-    load_vm_config "$vm"
-    while :; do
-        box_header "EDIT: $vm"
-        echo "1) Hostname     [$HOSTNAME]"
-        echo "2) Username     [$USERNAME]"
-        echo "3) Password     [•••••••]"
-        echo "4) SSH Port     [$SSH_PORT]"
-        echo "5) GUI Mode     [$GUI_MODE]"
-        echo "6) Forwards     [$PORT_FORWARDS]"
-        echo "7) RAM          [$MEMORY MB]"
-        echo "8) CPUs         [$CPUS]"
-        echo "9) Disk         [$DISK_SIZE]"
-        echo "0) Back"
-        read -p "Choice: " c
-        case "$c" in
-            1) printf "${CYAN}Hostname: ${RESET}"; read HOSTNAME ;;
-            2) printf "${CYAN}Username: ${RESET}"; read USERNAME ;;
-            3) printf "${CYAN}Password: ${RESET}"; read -s PASSWORD; echo ;;
-            4) printf "${CYAN}Port: ${RESET}"; read SSH_PORT ;;
-            5) printf "${CYAN}GUI (y/n): ${RESET}"; read g; GUI_MODE=false; [[ "$g" =~ ^[Yy]$ ]] && GUI_MODE=true ;;
-            6) printf "${CYAN}Forwards: ${RESET}"; read PORT_FORWARDS ;;
-            7) printf "${CYAN}RAM MB: ${RESET}"; read MEMORY ;;
-            8) printf "${CYAN}CPUs: ${RESET}"; read CPUS ;;
-            9) printf "${CYAN}Disk: ${RESET}"; read DISK_SIZE ;;
-            0) return ;;
-        esac
-        [[ "$c" =~ ^[1-3]$ ]] && setup_vm_image
-        save_vm_config
-    done
-}
-
-resize_vm_disk() {
-    local vm="$1"
-    load_vm_config "$vm"
-    is_vm_running "$vm" && { error "Stop first"; return; }
-    printf "${CYAN}New size [%s]: ${RESET}" "$DISK_SIZE"
-    read size; size=${size:-$DISK_SIZE}
-    qemu-img resize "$IMG_FILE" "$size" && DISK_SIZE="$size" && save_vm_config && success "Resized to $size"
-}
-
-show_vm_performance() {
-    local vm="$1"
-    load_vm_config "$vm"
-    box_header "PERFORMANCE: $vm"
-    if is_vm_running "$vm"; then
-        local pid=$(pgrep -f "qemu-system.*$IMG_FILE")
-        [[ -n "$pid" ]] && ps -p "$pid" -o pid,%cpu,%mem,rss,vsz,cmd --no-headers
-        free -h
-        df -h "$(dirname "$IMG_FILE")"
-    else
-        warning "Not running"
-        echo "Config: $MEMORY MB RAM • $CPUS CPU • $DISK_SIZE Disk"
-    fi
-    read -p "Press Enter..."
-}
-
-fix_vm_issues() {
-    local vm="$1"
-    load_vm_config "$vm"
-    box_header "FIX: $vm"
-    echo "1) Clear locks"
-    echo "2) Rebuild seed"
-    echo "3) Rebuild config"
-    echo "4) Kill stuck QEMU"
-    echo "0) Back"
-    read -p "Choice: " c
-    case "$c" in
-        1) rm -f "${IMG_FILE}.lock"*; success "Cleared" ;;
-        2) rm -f "$SEED_FILE"; setup_vm_image ;;
-        3) save_vm_config ;;
-        4) pkill -9 -f "qemu-system.*$IMG_FILE" 2>/dev/null; success "Killed" ;;
-        0) return ;;
-    esac
-}
-
 # Main Loop
 main_menu() {
     while :; do
@@ -461,12 +360,6 @@ main_menu() {
         menu_item "1" "Create New VM"
         (( n > 0 )) && menu_item "2" "Start VM"
         (( n > 0 )) && menu_item "3" "Stop VM"
-        (( n > 0 )) && menu_item "4" "Info"
-        (( n > 0 )) && menu_item "5" "Edit"
-        (( n > 0 )) && menu_item "6" "Delete"
-        (( n > 0 )) && menu_item "7" "Resize Disk"
-        (( n > 0 )) && menu_item "8" "Performance"
-        (( n > 0 )) && menu_item "9" "Fix Issues"
         menu_item "0" "Exit"
 
         printf "${NEON_CYAN}${BOLD}Choice: ${RESET}"
@@ -483,12 +376,6 @@ main_menu() {
                 case "$choice" in
                     2) start_vm "$vm" ;;
                     3) stop_vm "$vm" ;;
-                    4) show_vm_info "$vm" ;;
-                    5) edit_vm_config "$vm" ;;
-                    6) delete_vm "$vm" ;;
-                    7) resize_vm_disk "$vm" ;;
-                    8) show_vm_performance "$vm" ;;
-                    9) fix_vm_issues "$vm" ;;
                 esac
                 ;;
             0)
